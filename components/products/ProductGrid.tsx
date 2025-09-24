@@ -23,14 +23,25 @@ export const ProductGrid = ({
 }: ProductGridProps) => {
   const { targetRef, isIntersecting } = useIntersectionObserver({
     threshold: 0.1,
-    rootMargin: "260px",
+    rootMargin: "300px", // Increased from 100px to 300px for better trigger
   });
 
   useEffect(() => {
-    if (isIntersecting && hasMore && !isLoadingMore && onLoadMore) {
-      onLoadMore();
+    // Add delay to prevent immediate triggering after page load
+    if (
+      isIntersecting &&
+      hasMore &&
+      !isLoadingMore &&
+      onLoadMore &&
+      products.length > 0
+    ) {
+      const timer = setTimeout(() => {
+        onLoadMore();
+      }, 100); // Small delay to prevent immediate trigger
+
+      return () => clearTimeout(timer);
     }
-  }, [isIntersecting, hasMore, isLoadingMore, onLoadMore]);
+  }, [isIntersecting, hasMore, isLoadingMore, onLoadMore, products.length]);
 
   if (isLoading && products.length === 0) {
     return (
@@ -50,15 +61,19 @@ export const ProductGrid = ({
 
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
 
-      {/* Infinite scroll trigger */}
+      {/* Infinite scroll trigger - Always render when hasMore is true */}
       {hasMore && (
-        <div ref={targetRef} className="flex justify-center py-8">
+        <div
+          ref={targetRef}
+          className="flex justify-center py-8 min-h-[100px]"
+          style={{ minHeight: "100px" }} // Ensure trigger has enough height
+        >
           {isLoadingMore ? (
             <div className="flex items-center space-x-2">
               <LoadingSpinner />
