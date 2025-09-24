@@ -1,7 +1,7 @@
 import { Product } from "@/types/product";
 import { ProductCard } from "./ProductCard";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { useScrollTrigger } from "@/hooks/useScrollTrigger";
 import { useEffect } from "react";
 
 interface ProductGridProps {
@@ -21,27 +21,21 @@ export const ProductGrid = ({
   onLoadMore,
   currentPage = 1,
 }: ProductGridProps) => {
-  const { targetRef, isIntersecting } = useIntersectionObserver({
-    threshold: 0.1,
-    rootMargin: "300px", // Increased from 100px to 300px for better trigger
+  const { targetRef, shouldLoadMore } = useScrollTrigger({
+    threshold: 300, // Trigger when 300px from bottom
   });
 
   useEffect(() => {
-    // Add delay to prevent immediate triggering after page load
     if (
-      isIntersecting &&
+      shouldLoadMore &&
       hasMore &&
       !isLoadingMore &&
       onLoadMore &&
       products.length > 0
     ) {
-      const timer = setTimeout(() => {
-        onLoadMore();
-      }, 100); // Small delay to prevent immediate trigger
-
-      return () => clearTimeout(timer);
+      onLoadMore();
     }
-  }, [isIntersecting, hasMore, isLoadingMore, onLoadMore, products.length]);
+  }, [shouldLoadMore, hasMore, isLoadingMore, onLoadMore, products.length]);
 
   if (isLoading && products.length === 0) {
     return (
@@ -67,12 +61,14 @@ export const ProductGrid = ({
         ))}
       </div>
 
-      {/* Infinite scroll trigger - Always render when hasMore is true */}
+      {/* Scroll trigger element */}
       {hasMore && (
         <div
           ref={targetRef}
-          className="flex justify-center py-8 min-h-[100px]"
-          style={{ minHeight: "100px" }} // Ensure trigger has enough height
+          className="flex justify-center py-8 min-h-[200px] "
+          style={{
+            minHeight: "200px",
+          }}
         >
           {isLoadingMore ? (
             <div className="flex items-center space-x-2">
@@ -82,8 +78,13 @@ export const ProductGrid = ({
               </span>
             </div>
           ) : (
-            <div className="text-gray-400 text-sm">
-              Scroll down for more products
+            <div className="text-center">
+              <div className="text-gray-400 text-sm mb-2">
+                Scroll down for more products
+              </div>
+              <div className="text-xs text-blue-500">
+                SCROLL TRIGGER - Will load when 300px from viewport bottom
+              </div>
             </div>
           )}
         </div>
